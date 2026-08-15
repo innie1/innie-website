@@ -1,7 +1,7 @@
 const fs = require('fs');
 const path = require('path');
 
-// Ensure local data directory exists for local testing fallback
+// Local file save fallback (works on local machine; safely skips on read-only serverless lambdas)
 function saveSubscriberLocally(email) {
   try {
     const dataDir = path.join(__dirname, '..', 'data');
@@ -27,7 +27,7 @@ function saveSubscriberLocally(email) {
     }
     return true;
   } catch (err) {
-    console.error('Local subscriber save error:', err);
+    // Expected on read-only serverless environments like Vercel
     return false;
   }
 }
@@ -35,7 +35,7 @@ function saveSubscriberLocally(email) {
 // Send instant email notification to admin via Resend API
 async function sendResendAdminAlert(subscriberEmail) {
   const apiKey = process.env.RESEND_API_KEY;
-  if (!apiKey) return;
+  if (!apiKey) return false;
 
   const toEmail = process.env.NOTIFICATION_EMAIL || 'innswara@gmail.com';
   const fromEmail = process.env.RESEND_FROM_EMAIL || 'INNIE Updates <onboarding@resend.dev>';
@@ -67,12 +67,13 @@ async function sendResendAdminAlert(subscriberEmail) {
 
     const data = await res.json();
     if (!res.ok) {
-      console.warn('Resend admin alert warning:', data);
-    } else {
-      console.log(`[Resend] Sent admin alert for subscriber: ${subscriberEmail}`);
+      console.warn('[Resend Admin Alert Warning]:', data);
+      return false;
     }
+    return true;
   } catch (err) {
-    console.error('Failed to send Resend admin alert:', err);
+    console.error('[Resend Admin Alert Error]:', err);
+    return false;
   }
 }
 
@@ -84,7 +85,7 @@ async function sendResendWelcomeEmail(subscriberEmail) {
   const fromEmail = process.env.RESEND_FROM_EMAIL || 'INNIE Group <onboarding@resend.dev>';
 
   try {
-    const res = await fetch('https://api.resend.com/emails', {
+    await fetch('https://api.resend.com/emails', {
       method: 'POST',
       headers: {
         Authorization: `Bearer ${apiKey}`,
@@ -108,18 +109,13 @@ async function sendResendWelcomeEmail(subscriberEmail) {
         `
       })
     });
-    const data = await res.json();
-    if (!res.ok) {
-      console.warn('Resend welcome email note:', data?.message);
-    } else {
-      console.log(`[Resend] Sent welcome email to: ${subscriberEmail}`);
-    }
   } catch (err) {
-    console.error('Welcome email dispatch error:', err);
+    // Non-fatal
   }
 }
 
 module.exports = async (req, res) => {
+  // CORS & method check
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
   }
@@ -129,12 +125,14 @@ module.exports = async (req, res) => {
     return res.status(400).json({ error: 'Enter a valid email address.' });
   }
 
-  const url = process.env.SUPABASE_URL;
+  const url = process.env.SUPABASE_URL || 'https://skojozxjeoobakrubnuj.supabase.co';
   const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  const resendKey = process.env.RESEND_API_KEY;
 
-  let savedSuccessfully = false;
+  let supabaseSaved = false;
+  let emailDispatched = false;
 
-  // If Supabase credentials are configured, save to Supabase
+  // 1. Try Saving to Supabase
   if (url && key) {
     try {
       const response = await fetch(`${url.replace(/\/$/, '')}/rest/v1/innie_subscribers`, {
@@ -149,31 +147,43 @@ module.exports = async (req, res) => {
       });
 
       if (response.ok) {
-        savedSuccessfully = true;
+        supabaseSaved = true;
       } else {
         const text = await response.text();
-        console.error('Supabase subscription error:', text);
+        console.error('[Supabase Error]:', text);
       }
     } catch (err) {
-      console.error('Supabase request failed:', err);
+      console.error('[Supabase Request Failed]:', err);
     }
   }
 
-  // Fallback to local storage if Supabase is not yet configured or in local development
-  if (!savedSuccessfully) {
-    savedSuccessfully = saveSubscriberLocally(email);
+  // 2. Try Sending Resend Notifications (Awaited for Vercel Lambdas)
+  if (resendKey) {
+    try {
+      const alertSent = await sendResendAdminAlert(email);
+      if (alertSent) {
+        emailDispatched = true;
+      }
+      // Attempt welcome email without blocking
+      await sendResendWelcomeEmail(email);
+    } catch (err) {
+      console.error('[Resend Notification Error]:', err);
+    }
   }
 
-  if (savedSuccessfully) {
-    // Send email alert and welcome email asynchronously
-    sendResendAdminAlert(email).catch(console.error);
-    sendResendWelcomeEmail(email).catch(console.error);
+  // 3. Fallback to Local Storage if running locally
+  const localSaved = saveSubscriberLocally(email);
 
+  // If stored in Supabase OR notified via Resend OR saved locally -> SUCCESS
+  if (supabaseSaved || emailDispatched || localSaved) {
     return res.status(200).json({ 
       ok: true, 
       message: 'Subscribed successfully.' 
     });
   }
 
-  return res.status(503).json({ error: 'Email collection service is not ready.' });
+  // If all failed, provide a helpful message
+  return res.status(503).json({ 
+    error: 'Subscription service is not configured. Please ensure RESEND_API_KEY or SUPABASE_SERVICE_ROLE_KEY is set in Vercel Environment Variables.' 
+  });
 };
