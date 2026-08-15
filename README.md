@@ -4,16 +4,16 @@ INNIE Group — official website for showcasing our products, services, projects
 
 ## Design direction
 
-The site follows the original INNIE notebook concept rather than a generic SaaS template:
+The site follows the INNIE design direction:
 
-- Clean landing page with a thin INNIE header.
+- Clean landing page with a thin INNIE header and brand emblem.
 - **One email collector on the landing page only.**
-- The collector is compact on desktop and stacks cleanly on mobile.
-- Products & Services stays empty until INNIE publishes something.
+- The collector is compact on desktop and stacks cleanly on mobile with real-time feedback.
+- Products & Services section displays dynamic published items (empty state when nothing is published yet).
 - Published items become clickable cards and open their own detail page.
 - Detail pages support a hero image/logo, full description, status, multiple screenshots, and a live launch link.
-- No invented or placeholder products are shown to visitors.
-- Responsive mobile and desktop layouts.
+- About INNIE page (`/about.html`) with company vision, social channels, and direct contact.
+- Responsive mobile and desktop layouts with subtle micro-animations.
 
 ## Publishing dashboard
 
@@ -25,6 +25,7 @@ The site follows the original INNIE notebook concept rather than a generic SaaS 
 4. Upload a hero/logo image.
 5. Upload multiple product screenshots (up to 12, 3 MB each).
 6. Publish/save changes or unpublish an item.
+7. View collected email subscribers.
 
 The dashboard sends content to protected Vercel serverless endpoints. Publishing commits the images and updated `content.js` to GitHub. Vercel can then automatically redeploy the updated site.
 
@@ -35,7 +36,7 @@ The dashboard sends content to protected Vercel serverless endpoints. Publishing
 - `GITHUB_BRANCH` — `main11` (optional; this is the default).
 - `ADMIN_PASSWORD` — strong private password for `/admin.html`.
 - `ADMIN_SESSION_SECRET` — long random secret used to sign the admin session cookie.
-- `SUPABASE_URL` — Supabase project URL used by the email collector.
+- `SUPABASE_URL` — Supabase project URL used by the email collector (`https://skojozxjeoobakrubnuj.supabase.co`).
 - `SUPABASE_SERVICE_ROLE_KEY` — Supabase service-role key; server-side only, never expose it in frontend code.
 
 ### Email subscriber table
@@ -47,21 +48,42 @@ The service-role key is used only inside the Vercel serverless function, so subs
 ## Files
 
 - `index.html` — INNIE landing page.
+- `about.html` — INNIE about page and contact information.
 - `product.html` — individual product/service page.
-- `styles.css` — public visual system and responsive layout.
+- `styles.css` — public visual system, animations, and responsive layout.
 - `content.js` — published product/service data; managed by the publishing API.
 - `app.js` — landing-page rendering and the single email collector.
 - `product.js` — product/service detail rendering.
-- `admin.html` — private publishing dashboard UI.
+- `admin.html` — private publishing dashboard UI and subscriber viewer.
 - `admin.css` — publishing dashboard styles.
-- `admin.js` — dashboard interaction, editing, and uploads.
+- `admin.js` — dashboard interaction, editing, uploads, and subscriber management.
 - `api/admin-login.js` — protected admin login endpoint.
 - `api/admin-content.js` — authenticated published-content endpoint.
 - `api/admin-publish.js` — GitHub-backed publishing/editing endpoint.
 - `api/admin-unpublish.js` — authenticated unpublish endpoint.
-- `api/subscribe.js` — Supabase-backed email subscription endpoint.
+- `api/admin-subscribers.js` — authenticated subscriber emails endpoint.
+- `api/subscribe.js` — Supabase-backed email subscription endpoint with local dev storage fallback.
 - `supabase.sql` — database table setup for homepage subscribers.
+- `dev-server.js` — lightweight local development server for static files and `/api/` endpoints.
 - `vercel.json` — minimal Vercel configuration; API function runtimes are detected automatically by Vercel.
+
+## Local Development
+
+Run the local development server:
+
+```bash
+npm run dev
+# or
+node dev-server.js
+```
+
+The site will be available at:
+- Homepage: `http://localhost:3000`
+- Admin Dashboard: `http://localhost:3000/admin.html`
+- Product Detail: `http://localhost:3000/product.html`
+- About: `http://localhost:3000/about.html`
+
+Environment variables for local testing (optional) can be placed in `.env` or `.env.local`.
 
 ## Deployment
 

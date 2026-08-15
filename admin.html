@@ -36,6 +36,19 @@
         <div id="preview" class="preview-grid"></div>
         <div class="publish-row"><button type="submit" id="publish-button">Publish product/service</button><button type="button" id="cancel-edit" class="secondary" hidden>Cancel edit</button><p class="admin-note" id="publish-note"></p></div>
       </form>
+      
+      <!-- Email Subscribers Section -->
+      <div class="subscribers-section" style="margin-top: 56px; border-top: 1px solid var(--line); padding-top: 32px;">
+        <div class="admin-heading" style="margin-bottom: 16px;">
+          <div>
+            <p class="eyebrow">EMAIL SUBSCRIBERS</p>
+            <h2>Collected Emails</h2>
+            <p>People who signed up on the landing page to be notified when you launch.</p>
+          </div>
+          <button type="button" id="refresh-subscribers" class="mini" style="height: 36px; padding: 0 16px;">Refresh list</button>
+        </div>
+        <div id="subscribers-list" class="published-list" style="margin-top: 12px;"></div>
+      </div>
     </section>
   </main>
   <script src="admin.js"></script>

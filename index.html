@@ -3,40 +3,94 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <meta name="description" content="INNIE Group — products, services, projects, and company updates." />
-  <title>INNIE — Products & Services</title>
+  <meta name="description" content="INNIE Group — Building simple, useful products and services that help people and businesses move forward." />
+  <title>INNIE — Home</title>
+  <link rel="icon" type="image/svg+xml" href="assets/logo.svg" />
   <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
-  <header class="site-header">
-    <a class="wordmark" href="index.html" aria-label="INNIE home">INNIE</a>
-    <nav aria-label="Primary navigation"><a href="#products">Products &amp; Services</a><a href="#contact">Contact Us</a></nav>
+
+  <!-- Site Header -->
+  <header class="site-header home-header">
+    <div class="header-left">
+      <a class="brand-logo" href="index.html" aria-label="INNIE home">INNIE</a>
+    </div>
+    <div class="header-center">
+      <a class="nav-link" href="#products">Products &amp; Services</a>
+    </div>
+    <div class="header-right">
+      <a class="nav-link" href="about.html">Contact Us</a>
+    </div>
   </header>
-  <main>
-    <section class="notify" aria-labelledby="notify-title">
-      <div class="notify-copy">
-        <p class="eyebrow">INNIE GROUP</p>
-        <h1 id="notify-title">Something new is coming.</h1>
-        <p>Be the first to know when we launch something new.</p>
-      </div>
-      <form class="email-form" id="email-form">
-        <label class="sr-only" for="email">Email address</label>
-        <input id="email" name="email" type="email" placeholder="Your email address" autocomplete="email" required />
-        <button type="submit">Keep me posted</button>
+
+  <main class="main-wrapper">
+
+    <!-- Hero / Notify Section -->
+    <section class="hero-section" aria-labelledby="hero-title">
+      <p class="eyebrow-blue">BE THE FIRST TO KNOW</p>
+      <h1 class="hero-title" id="hero-title">Something new is coming.</h1>
+      <p class="hero-subtitle">Leave your email and we'll let you know when we launch.</p>
+      
+      <form class="notify-form" id="email-form">
+        <label class="sr-only" for="email" style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0);">Email address</label>
+        <input class="notify-input" id="email" name="email" type="email" placeholder="Enter your email" autocomplete="email" required />
+        <button class="notify-btn" type="submit">Notify me</button>
       </form>
-      <p class="form-note" id="form-note" role="status" aria-live="polite"></p>
+      <p class="notify-feedback" id="form-note" role="status" aria-live="polite"></p>
     </section>
-    <section class="products" id="products" aria-labelledby="products-title">
-      <div class="section-heading"><div><p class="eyebrow">WHAT WE'RE BUILDING</p><h2 id="products-title">Products &amp; Services</h2></div></div>
-      <div class="product-grid" id="product-grid"></div>
-      <div class="empty-state" id="empty-state"><span class="empty-line"></span><p>Products and services will appear here when they are published.</p><span class="empty-line"></span></div>
+
+    <!-- Products & Services Section -->
+    <section class="products-section" id="products" aria-labelledby="products-title">
+      <p class="eyebrow-blue">PRODUCTS & SERVICES</p>
+      <h2 class="products-title" id="products-title">Products &amp; Services</h2>
+      <p class="products-subtitle">Tap any item to learn more.</p>
+
+      <div class="products-grid" id="product-grid"></div>
+      <div class="empty-products-notice" id="empty-state">
+        <p>Products and services will appear here when they are published.</p>
+      </div>
     </section>
-    <section class="company" id="about">
-      <div class="company-mark" aria-hidden="true">I</div>
-      <div class="company-copy"><p class="eyebrow">ABOUT INNIE</p><h2>We build, launch and grow ideas.</h2><p>INNIE is a company platform for the products, services and ideas we choose to bring into the world.</p></div>
+
+    <!-- Bottom Split Section: Brand / About & Blog -->
+    <section class="bottom-split-section" id="about">
+      
+      <!-- Left Column: About INNIE & Brand Emblem -->
+      <div class="about-column">
+        <a class="brand-display-card" href="about.html" aria-label="About INNIE">
+          <img class="innie-logo-img" src="assets/logo.svg" alt="INNIE GROUP Logo" />
+        </a>
+        <div class="about-innie-block">
+          <h3>About INNIE</h3>
+          <p>INNIE is a company focused on building simple, useful products and services that solve real problems and create lasting impact.</p>
+          <p><a href="about.html" style="color: var(--primary-blue); font-weight: 600;">Learn more about us &rarr;</a></p>
+        </div>
+      </div>
+
+      <!-- Right Column: From the Blog / Company Updates -->
+      <div class="blog-column">
+        <div class="blog-header">
+          <h3>From the Blog</h3>
+          <a class="blog-view-all" href="#">View all posts &rarr;</a>
+        </div>
+        <div class="empty-blog-notice">
+          <p>Company updates, announcements, and articles will appear here as they are published.</p>
+        </div>
+      </div>
+
     </section>
+
   </main>
-  <footer id="contact" class="site-footer"><span class="footer-mark">I</span><p>INNIE Group — building what comes next.</p><a href="mailto:hello@innie.group">hello@innie.group</a></footer>
-  <script src="content.js"></script><script src="app.js"></script>
+
+  <!-- Site Footer -->
+  <footer class="site-footer">
+    <div class="footer-emblem">
+      <img class="innie-logo-footer" src="assets/logo.svg" alt="INNIE GROUP" />
+    </div>
+    <p class="footer-tagline">Building simple, useful products that help people and businesses move forward.</p>
+    <p class="footer-copyright">&copy; INNIE GROUP</p>
+  </footer>
+
+  <script src="content.js"></script>
+  <script src="app.js"></script>
 </body>
 </html>

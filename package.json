@@ -2,5 +2,10 @@
   "name": "innie-website",
   "version": "1.0.0",
   "private": true,
-  "engines": { "node": ">=20" }
+  "engines": { "node": ">=20" },
+  "scripts": {
+    "dev": "node dev-server.js",
+    "start": "node dev-server.js",
+    "vercel:dev": "vercel dev"
+  }
 }

@@ -30,9 +30,42 @@ function renderPublished() {
 }
 async function loadPublished() { const r = await fetch('/api/admin-content'); const d = await r.json(); if (!r.ok) throw new Error(d.error || 'Could not load published items.'); published = d.products || []; renderPublished(); }
 
+const subscribersList = document.getElementById('subscribers-list');
+const refreshSubscribersBtn = document.getElementById('refresh-subscribers');
+
+async function loadSubscribers() {
+  if (!subscribersList) return;
+  subscribersList.innerHTML = '<div class="published-empty">Loading subscribers…</div>';
+  try {
+    const res = await fetch('/api/admin-subscribers');
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Could not load subscribers.');
+    const list = data.subscribers || [];
+    if (list.length === 0) {
+      subscribersList.innerHTML = '<div class="published-empty">No email subscribers collected yet.</div>';
+      return;
+    }
+    subscribersList.innerHTML = `
+      <div style="font-size: 12px; color: var(--muted); margin-bottom: 8px;">Total subscribers: <strong>${list.length}</strong></div>
+      ${list.map(s => `
+        <div class="published-row-item">
+          <div>
+            <strong>${s.email}</strong>
+            <span>Signed up: ${new Date(s.created_at || Date.now()).toLocaleString()}</span>
+          </div>
+        </div>
+      `).join('')}
+    `;
+  } catch (err) {
+    subscribersList.innerHTML = `<div class="published-empty" style="color:#d9534f;">${err.message}</div>`;
+  }
+}
+
+refreshSubscribersBtn?.addEventListener('click', loadSubscribers);
+
 loginForm.addEventListener('submit', async (event) => {
   event.preventDefault(); note(loginNote, 'Signing in…');
-  try { const response = await fetch('/api/admin-login', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({password:document.getElementById('admin-password').value})}); const data = await response.json(); if (!response.ok) throw new Error(data.error || 'Sign in failed.'); loginPanel.hidden = true; editorPanel.hidden = false; await loadPublished(); }
+  try { const response = await fetch('/api/admin-login', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({password:document.getElementById('admin-password').value})}); const data = await response.json(); if (!response.ok) throw new Error(data.error || 'Sign in failed.'); loginPanel.hidden = true; editorPanel.hidden = false; await loadPublished(); await loadSubscribers(); }
   catch (error) { note(loginNote, error.message, 'error'); }
 });
 productForm.addEventListener('submit', async (event) => {
@@ -41,3 +74,4 @@ productForm.addEventListener('submit', async (event) => {
   catch (error) { note(publishNote, error.message, 'error'); } finally { publishButton.disabled = false; }
 });
 cancelEdit.addEventListener('click', resetEditor);
+
