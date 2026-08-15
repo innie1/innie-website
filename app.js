@@ -12,7 +12,19 @@ function escapeHtml(value) {
   }[char]));
 }
 
-function renderProducts() {
+async function fetchRating(slug) {
+  try {
+    const res = await fetch(`/api/rate-product?slug=${encodeURIComponent(slug)}`);
+    if (res.ok) {
+      return await res.json();
+    }
+  } catch {
+    // ignore
+  }
+  return { average: 0, count: 0 };
+}
+
+async function renderProducts() {
   if (!grid) return;
   
   if (products.length > 0) {
@@ -20,7 +32,7 @@ function renderProducts() {
     grid.style.display = 'grid';
     grid.innerHTML = '';
     
-    products.forEach((product) => {
+    for (const product of products) {
       const card = document.createElement('a');
       card.className = 'filled-product-card';
       card.href = `product.html?slug=${encodeURIComponent(product.slug)}`;
@@ -38,7 +50,10 @@ function renderProducts() {
           ${imgContent}
         </div>
         <div>
-          <h3 class="product-card-name">${escapeHtml(product.name)}</h3>
+          <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 8px;">
+            <h3 class="product-card-name">${escapeHtml(product.name)}</h3>
+            <span id="card-rating-${escapeHtml(product.slug)}" class="product-card-rating" style="display: none;"></span>
+          </div>
           <p class="product-card-desc">${escapeHtml(product.shortDescription || '')}</p>
         </div>
         <div class="product-card-footer">
@@ -50,7 +65,16 @@ function renderProducts() {
         </div>
       `;
       grid.appendChild(card);
-    });
+
+      // Async load rating badge
+      fetchRating(product.slug).then((data) => {
+        const ratingBadge = document.getElementById(`card-rating-${product.slug}`);
+        if (ratingBadge && data && data.count > 0) {
+          ratingBadge.innerHTML = `★ ${data.average} <span style="font-size: 10px; opacity: 0.8;">(${data.count})</span>`;
+          ratingBadge.style.display = 'inline-flex';
+        }
+      });
+    }
   } else {
     grid.style.display = 'none';
     if (emptyState) emptyState.style.display = 'block';
@@ -59,16 +83,20 @@ function renderProducts() {
 
 const form = document.getElementById('email-form');
 const note = document.getElementById('form-note');
+const postSignupPrompt = document.getElementById('post-signup-prompt');
 
 form?.addEventListener('submit', async (event) => {
   event.preventDefault();
   const button = form.querySelector('button');
+  const btnText = button.querySelector('.btn-text') || button;
   const emailInput = form.querySelector('input[type="email"]');
   const email = emailInput ? emailInput.value.trim() : '';
   if (!email) return;
 
   button.disabled = true;
-  note.textContent = 'Saving…';
+  btnText.textContent = 'Saving…';
+  note.textContent = '';
+  if (postSignupPrompt) postSignupPrompt.style.display = 'none';
   
   try {
     const response = await fetch('/api/subscribe', {
@@ -78,12 +106,17 @@ form?.addEventListener('submit', async (event) => {
     });
     const data = await response.json();
     if (!response.ok) throw new Error(data.error || 'Could not save your email.');
-    note.textContent = 'You’re on the list. We’ll notify you when we launch!';
+    
+    note.textContent = '🎉 You’re on the list! Welcome to INNIE Group.';
+    if (postSignupPrompt) {
+      postSignupPrompt.style.display = 'block';
+    }
     form.reset();
   } catch (error) {
     note.textContent = error.message;
   } finally {
     button.disabled = false;
+    btnText.textContent = 'Notify me';
   }
 });
 

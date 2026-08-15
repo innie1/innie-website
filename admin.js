@@ -24,7 +24,28 @@ function editProduct(product) {
 }
 function renderPublished() {
   if (!published.length) { list.innerHTML = '<div class="published-empty">Nothing published yet.</div>'; return; }
-  list.innerHTML = '<p class="eyebrow">PUBLISHED</p>' + published.map((p, i) => `<div class="published-row-item"><div><strong>${p.name}</strong><span>${p.type} · ${p.status}</span></div><div><button type="button" data-edit="${i}" class="mini">Edit</button><button type="button" data-remove="${i}" class="mini danger">Unpublish</button></div></div>`).join('');
+  list.innerHTML = '<p class="eyebrow">PUBLISHED</p>' + published.map((p, i) => `
+    <div class="published-row-item">
+      <div>
+        <strong>${p.name}</strong>
+        <span>${p.type} · ${p.status} <span id="admin-rating-${p.slug}" style="margin-left: 8px; color: #d97706; font-weight: 600;"></span></span>
+      </div>
+      <div>
+        <button type="button" data-edit="${i}" class="mini">Edit</button>
+        <button type="button" data-remove="${i}" class="mini danger">Unpublish</button>
+      </div>
+    </div>
+  `).join('');
+  
+  published.forEach(p => {
+    fetch(`/api/rate-product?slug=${encodeURIComponent(p.slug)}`).then(r => r.ok ? r.json() : null).then(data => {
+      const el = document.getElementById(`admin-rating-${p.slug}`);
+      if (el && data && data.count > 0) {
+        el.textContent = `★ ${data.average} (${data.count} ratings)`;
+      }
+    }).catch(() => {});
+  });
+
   list.querySelectorAll('[data-edit]').forEach(b => b.addEventListener('click', () => editProduct(published[Number(b.dataset.edit)])));
   list.querySelectorAll('[data-remove]').forEach(b => b.addEventListener('click', async () => { const p = published[Number(b.dataset.remove)]; if (!confirm(`Unpublish ${p.name}?`)) return; b.disabled = true; try { const r = await fetch('/api/admin-unpublish', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({slug:p.slug})}); const d = await r.json(); if (!r.ok) throw new Error(d.error || 'Unpublish failed.'); await loadPublished(); resetEditor(); } catch(e) { alert(e.message); } finally { b.disabled = false; } }));
 }

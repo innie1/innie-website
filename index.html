@@ -4,6 +4,22 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="description" content="INNIE Group — Building simple, useful products and services that help people and businesses move forward." />
+  
+  <!-- Open Graph / Facebook / LinkedIn -->
+  <meta property="og:type" content="website" />
+  <meta property="og:title" content="INNIE Group — Building simple, useful products & services" />
+  <meta property="og:description" content="Be the first to test what we're building. Private beta access, early releases, and launch updates." />
+  <meta property="og:image" content="assets/logo.svg" />
+  <meta property="og:site_name" content="INNIE Group" />
+
+  <!-- Twitter / X -->
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:site" content="@inniegroup" />
+  <meta name="twitter:creator" content="@inniegroup" />
+  <meta name="twitter:title" content="INNIE Group — Building simple, useful products & services" />
+  <meta name="twitter:description" content="Be the first to test what we're building. Private beta access, early releases, and launch updates." />
+  <meta name="twitter:image" content="assets/logo.svg" />
+
   <title>INNIE — Home</title>
   <link rel="icon" type="image/svg+xml" href="assets/logo.svg" />
   <link rel="stylesheet" href="styles.css" />
@@ -29,21 +45,33 @@
     <section class="hero-section" aria-labelledby="hero-title">
       <p class="eyebrow-blue">BE THE FIRST TO KNOW</p>
       <h1 class="hero-title" id="hero-title">Something new is coming.</h1>
-      <p class="hero-subtitle">Leave your email and we'll let you know when we launch.</p>
+      <p class="hero-subtitle">Be the first to test what we're building. Leave your email for private beta invites, launch-day access, and insider updates.</p>
       
       <form class="notify-form" id="email-form">
         <label class="sr-only" for="email" style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0);">Email address</label>
         <input class="notify-input" id="email" name="email" type="email" placeholder="Enter your email" autocomplete="email" required />
-        <button class="notify-btn" type="submit">Notify me</button>
+        <button class="notify-btn" id="notify-button" type="submit">
+          <span class="btn-text">Notify me</span>
+        </button>
       </form>
-      <p class="notify-feedback" id="form-note" role="status" aria-live="polite"></p>
+      <div class="notify-feedback-wrapper" id="form-note-wrapper">
+        <p class="notify-feedback" id="form-note" role="status" aria-live="polite"></p>
+        <div class="post-signup-prompt" id="post-signup-prompt" style="display: none;">
+          <a class="post-signup-x-btn" href="https://x.com/inniegroup" target="_blank" rel="noopener noreferrer">
+            <svg viewBox="0 0 24 24" style="width: 16px; height: 16px; fill: currentColor;">
+              <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
+            </svg>
+            <span>Follow @inniegroup on X for progress updates &rarr;</span>
+          </a>
+        </div>
+      </div>
     </section>
 
     <!-- Products & Services Section -->
     <section class="products-section" id="products" aria-labelledby="products-title">
       <p class="eyebrow-blue">PRODUCTS & SERVICES</p>
       <h2 class="products-title" id="products-title">Products &amp; Services</h2>
-      <p class="products-subtitle">Tap any item to learn more.</p>
+      <p class="products-subtitle">Tap any item to learn more and rate our releases.</p>
 
       <div class="products-grid" id="product-grid"></div>
       <div class="empty-products-notice" id="empty-state">
@@ -70,10 +98,10 @@
       <div class="blog-column">
         <div class="blog-header">
           <h3>From the Blog</h3>
-          <a class="blog-view-all" href="#">View all posts &rarr;</a>
+          <a class="blog-view-all" href="https://x.com/inniegroup" target="_blank" rel="noopener noreferrer">Follow updates on X &rarr;</a>
         </div>
         <div class="empty-blog-notice">
-          <p>Company updates, announcements, and articles will appear here as they are published.</p>
+          <p>Company updates, announcements, and articles are shared regularly as we build.</p>
         </div>
       </div>
 

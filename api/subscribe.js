@@ -32,12 +32,12 @@ function saveSubscriberLocally(email) {
   }
 }
 
-// Send instant email notification via Resend API
-async function sendResendNotification(subscriberEmail) {
+// Send instant email notification to admin via Resend API
+async function sendResendAdminAlert(subscriberEmail) {
   const apiKey = process.env.RESEND_API_KEY;
   if (!apiKey) return;
 
-  const toEmail = process.env.NOTIFICATION_EMAIL || 'inniegroup@gmail.com';
+  const toEmail = process.env.NOTIFICATION_EMAIL || 'innswara@gmail.com';
   const fromEmail = process.env.RESEND_FROM_EMAIL || 'INNIE Updates <onboarding@resend.dev>';
 
   try {
@@ -67,12 +67,55 @@ async function sendResendNotification(subscriberEmail) {
 
     const data = await res.json();
     if (!res.ok) {
-      console.warn('Resend notification warning:', data);
+      console.warn('Resend admin alert warning:', data);
     } else {
-      console.log(`[Resend Notification] Sent email notification for: ${subscriberEmail}`);
+      console.log(`[Resend] Sent admin alert for subscriber: ${subscriberEmail}`);
     }
   } catch (err) {
-    console.error('Failed to send Resend notification:', err);
+    console.error('Failed to send Resend admin alert:', err);
+  }
+}
+
+// Send automated welcome email to the subscriber
+async function sendResendWelcomeEmail(subscriberEmail) {
+  const apiKey = process.env.RESEND_API_KEY;
+  if (!apiKey) return;
+
+  const fromEmail = process.env.RESEND_FROM_EMAIL || 'INNIE Group <onboarding@resend.dev>';
+
+  try {
+    const res = await fetch('https://api.resend.com/emails', {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${apiKey}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        from: fromEmail,
+        to: [subscriberEmail],
+        subject: "Welcome to INNIE Group — you're on the list",
+        html: `
+          <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 540px; margin: 0 auto; padding: 32px 24px; border: 1px solid #e2e8f0; border-radius: 12px; background: #ffffff;">
+            <h2 style="color: #00A3FF; margin-top: 0; font-size: 24px; letter-spacing: 0.04em;">INNIE GROUP</h2>
+            <p style="font-size: 16px; color: #0f172a; line-height: 1.6;">Thank you for joining our waitlist! You're officially in line to receive private beta invites, launch-day access, and development updates.</p>
+            <p style="font-size: 15px; color: #475569; line-height: 1.6;">In the meantime, follow our journey and behind-the-scenes updates on X:</p>
+            <div style="margin: 24px 0;">
+              <a href="https://x.com/inniegroup" style="display: inline-block; background-color: #00A3FF; color: #ffffff; padding: 12px 24px; border-radius: 6px; font-weight: 600; text-decoration: none; font-size: 14px;">Follow @inniegroup on X &rarr;</a>
+            </div>
+            <hr style="border: 0; border-top: 1px solid #e2e8f0; margin: 28px 0 16px;" />
+            <p style="font-size: 12px; color: #94a3b8; margin: 0;">INNIE Group &middot; Building simple, useful products and services that move people forward.</p>
+          </div>
+        `
+      })
+    });
+    const data = await res.json();
+    if (!res.ok) {
+      console.warn('Resend welcome email note:', data?.message);
+    } else {
+      console.log(`[Resend] Sent welcome email to: ${subscriberEmail}`);
+    }
+  } catch (err) {
+    console.error('Welcome email dispatch error:', err);
   }
 }
 
@@ -116,14 +159,15 @@ module.exports = async (req, res) => {
     }
   }
 
-  // Fallback to local storage if Supabase is not yet configured or fails in local development
+  // Fallback to local storage if Supabase is not yet configured or in local development
   if (!savedSuccessfully) {
     savedSuccessfully = saveSubscriberLocally(email);
   }
 
   if (savedSuccessfully) {
-    // Send email alert via Resend asynchronously
-    sendResendNotification(email).catch(console.error);
+    // Send email alert and welcome email asynchronously
+    sendResendAdminAlert(email).catch(console.error);
+    sendResendWelcomeEmail(email).catch(console.error);
 
     return res.status(200).json({ 
       ok: true, 

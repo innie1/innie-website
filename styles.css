@@ -954,6 +954,130 @@ a {
 }
 
 /* =========================================================
+   Post-Signup Social Prompt
+   ========================================================= */
+.notify-feedback-wrapper {
+  margin-top: 14px;
+}
+
+.post-signup-prompt {
+  margin-top: 12px;
+  animation: fadeInUp 0.4s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.post-signup-x-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--primary-blue-light);
+  border: 1px solid var(--primary-blue-soft);
+  color: var(--primary-blue);
+  padding: 10px 18px;
+  border-radius: var(--radius-md);
+  font-size: 13px;
+  font-weight: 600;
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.post-signup-x-btn:hover {
+  background: var(--primary-blue);
+  color: #ffffff;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px -4px rgba(0, 163, 255, 0.35);
+}
+
+/* =========================================================
+   Product Rating System
+   ========================================================= */
+.rating-section {
+  background: var(--card-bg);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-xl);
+  padding: 32px;
+  margin-top: 48px;
+  animation: fadeInUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.rating-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+.rating-score-display {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.rating-average-number {
+  font-size: 32px;
+  font-weight: 800;
+  color: var(--ink-primary);
+  line-height: 1;
+}
+
+.rating-max {
+  font-size: 16px;
+  color: var(--ink-muted);
+  font-weight: 500;
+}
+
+.rating-count-label {
+  font-size: 13px;
+  color: var(--ink-secondary);
+}
+
+.star-rating-picker {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 16px 0;
+}
+
+.star-btn {
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  padding: 4px;
+  font-size: 26px;
+  color: #cbd5e1;
+  transition: color 0.15s ease, transform 0.15s ease;
+  line-height: 1;
+}
+
+.star-btn:hover,
+.star-btn.hovered,
+.star-btn.active {
+  color: #fbbf24;
+  transform: scale(1.15);
+}
+
+.rating-feedback-note {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--primary-blue);
+  margin-top: 8px;
+  min-height: 18px;
+}
+
+/* Product Card Rating Badge */
+.product-card-rating {
+  font-size: 11px;
+  font-weight: 700;
+  color: #d97706;
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  background: #fef3c7;
+  padding: 2px 7px;
+  border-radius: 12px;
+}
+
+/* =========================================================
    Responsive Breakpoints
    ========================================================= */
 @media (max-width: 900px) {
@@ -1009,5 +1133,8 @@ a {
   }
   .about-contact-section {
     grid-template-columns: 1fr;
+  }
+  .rating-section {
+    padding: 20px;
   }
 }

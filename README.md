@@ -62,8 +62,9 @@ The service-role key is used only inside the Vercel serverless function, so subs
 - `api/admin-publish.js` — GitHub-backed publishing/editing endpoint.
 - `api/admin-unpublish.js` — authenticated unpublish endpoint.
 - `api/admin-subscribers.js` — authenticated subscriber emails endpoint.
-- `api/subscribe.js` — Supabase-backed email subscription endpoint with local dev storage fallback.
-- `supabase.sql` — database table setup for homepage subscribers.
+- `api/subscribe.js` — Supabase-backed email subscription endpoint with Resend automated alerts.
+- `api/rate-product.js` — interactive 5-star ratings and customer reviews endpoint.
+- `supabase.sql` — database table setup for homepage subscribers and product ratings.
 - `dev-server.js` — lightweight local development server for static files and `/api/` endpoints.
 - `vercel.json` — minimal Vercel configuration; API function runtimes are detected automatically by Vercel.
 
