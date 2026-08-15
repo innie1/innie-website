@@ -1,10 +1,13 @@
 const crypto = require('crypto');
+const fs = require('fs');
+const path = require('path');
 
 const repo = process.env.GITHUB_REPO || 'innie1/innie-website';
 const branch = process.env.GITHUB_BRANCH || 'main11';
 const api = 'https://api.github.com';
 
 function json(res, status, body) { return res.status(status).json(body); }
+
 function authOk(req) {
   const secret = process.env.ADMIN_SESSION_SECRET;
   const password = process.env.ADMIN_PASSWORD;
@@ -15,11 +18,13 @@ function authOk(req) {
   const expected = crypto.createHmac('sha256', secret).update(password).digest('hex');
   return crypto.timingSafeEqual(Buffer.from(cookies.innie_admin), Buffer.from(expected));
 }
+
 function slugify(value) {
   return String(value || '').toLowerCase().trim().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 80);
 }
-async function gh(path, options = {}) {
-  const response = await fetch(`${api}${path}`, {
+
+async function gh(apiPath, options = {}) {
+  const response = await fetch(`${api}${apiPath}`, {
     ...options,
     headers: { Authorization: `Bearer ${process.env.GITHUB_TOKEN}`, Accept: 'application/vnd.github+json', 'X-GitHub-Api-Version': '2022-11-28', ...(options.headers || {}) }
   });
@@ -28,6 +33,7 @@ async function gh(path, options = {}) {
   if (!response.ok) throw new Error(data.message || `GitHub request failed (${response.status})`);
   return data;
 }
+
 function decodeImage(dataUrl) {
   const match = /^data:(image\/(?:png|jpeg|jpg|webp|gif));base64,([A-Za-z0-9+/=]+)$/.exec(dataUrl || '');
   if (!match) throw new Error('Images must be PNG, JPEG, WebP or GIF uploads.');
@@ -36,19 +42,84 @@ function decodeImage(dataUrl) {
   const ext = match[1].replace('jpeg', 'jpg').replace('image/', '');
   return { bytes, ext };
 }
-async function upsertFile(path, bytesOrText, message) {
+
+async function upsertFile(filePath, bytesOrText, message) {
   let sha;
-  try { sha = (await gh(`/repos/${repo}/contents/${encodeURIComponent(path)}?ref=${encodeURIComponent(branch)}`)).sha; } catch (e) { if (!String(e.message).includes('Not Found')) throw e; }
+  try { 
+    sha = (await gh(`/repos/${repo}/contents/${encodeURIComponent(filePath)}?ref=${encodeURIComponent(branch)}`)).sha; 
+  } catch (e) { 
+    if (!String(e.message).includes('Not Found')) throw e; 
+  }
   const content = Buffer.isBuffer(bytesOrText) ? bytesOrText.toString('base64') : Buffer.from(bytesOrText, 'utf8').toString('base64');
   const body = { message, content, branch };
   if (sha) body.sha = sha;
-  return gh(`/repos/${repo}/contents/${path.split('/').map(encodeURIComponent).join('/')}`, { method: 'PUT', body: JSON.stringify(body), headers: { 'Content-Type': 'application/json' } });
+  return gh(`/repos/${repo}/contents/${filePath.split('/').map(encodeURIComponent).join('/')}`, { 
+    method: 'PUT', 
+    body: JSON.stringify(body), 
+    headers: { 'Content-Type': 'application/json' } 
+  });
+}
+
+function saveLocally(productData, heroImageUpload, screenshotUploads, isEdit) {
+  const assetsDir = path.join(__dirname, '..', 'assets');
+  if (!fs.existsSync(assetsDir)) fs.mkdirSync(assetsDir, { recursive: true });
+
+  let heroImagePath = productData.heroImage || '';
+  if (heroImageUpload) {
+    const { bytes, ext } = decodeImage(heroImageUpload);
+    const fileName = `${productData.slug}-hero.${ext}`;
+    fs.writeFileSync(path.join(assetsDir, fileName), bytes);
+    heroImagePath = `assets/${fileName}`;
+  }
+
+  const screenshots = (productData.screenshots || []).slice();
+  if (screenshotUploads && screenshotUploads.length > 0) {
+    screenshotUploads.forEach((dataUrl, i) => {
+      const { bytes, ext } = decodeImage(dataUrl);
+      const fileName = `${productData.slug}-shot-${i + 1}.${ext}`;
+      fs.writeFileSync(path.join(assetsDir, fileName), bytes);
+      screenshots.push(`assets/${fileName}`);
+    });
+  }
+
+  const contentFilePath = path.join(__dirname, '..', 'content.js');
+  let products = [];
+  if (fs.existsSync(contentFilePath)) {
+    const text = fs.readFileSync(contentFilePath, 'utf8');
+    const marker = 'window.INNIE_PRODUCTS = ';
+    const start = text.indexOf(marker);
+    const end = text.indexOf('];', start);
+    if (start >= 0 && end >= 0) {
+      try {
+        products = JSON.parse(text.slice(start + marker.length, end + 1));
+      } catch {
+        products = [];
+      }
+    }
+  }
+
+  const newProduct = {
+    ...productData,
+    heroImage: heroImagePath,
+    screenshots,
+    updatedAt: new Date().toISOString()
+  };
+
+  const existingIdx = products.findIndex(p => p.slug === newProduct.slug);
+  if (existingIdx >= 0) {
+    products[existingIdx] = newProduct;
+  } else {
+    products.unshift(newProduct);
+  }
+
+  const newContentJs = `// INNIE content source of truth.\n// Automatically maintained by the INNIE Publishing API.\nwindow.INNIE_PRODUCTS = ${JSON.stringify(products, null, 2)};\n`;
+  fs.writeFileSync(contentFilePath, newContentJs, 'utf8');
+  return newProduct;
 }
 
 module.exports = async (req, res) => {
   if (req.method !== 'POST') return json(res, 405, { error: 'Method not allowed' });
   if (!authOk(req)) return json(res, 401, { error: 'Not authenticated.' });
-  if (!process.env.GITHUB_TOKEN) return json(res, 503, { error: 'GITHUB_TOKEN is not configured.' });
 
   try {
     const body = req.body || {};
@@ -58,50 +129,79 @@ module.exports = async (req, res) => {
     const slug = slugify(body.slug || name);
     if (!name || !slug) return json(res, 400, { error: 'Product/service name is required.' });
 
-    const base = `assets/${slug}`;
-    let heroImage = '';
-    if (body.heroImage) {
-      const image = decodeImage(body.heroImage);
-      const path = `${base}/hero.${image.ext}`;
-      await upsertFile(path, image.bytes, `Add ${name} hero image`);
-      heroImage = path;
+    const shortDescription = String(body.shortDescription || '').trim();
+    const description = String(body.description || '').trim();
+    const appUrl = String(body.appUrl || '').trim();
+    const heroImageUpload = body.heroImageUpload || null;
+    const screenshotUploads = Array.isArray(body.screenshotUploads) ? body.screenshotUploads : [];
+    const editingSlug = body.editingSlug ? String(body.editingSlug).trim() : null;
+
+    // In production with GITHUB_TOKEN
+    if (process.env.GITHUB_TOKEN) {
+      let heroImage = body.heroImage || '';
+      if (heroImageUpload) {
+        const { bytes, ext } = decodeImage(heroImageUpload);
+        heroImage = `assets/${slug}-hero.${ext}`;
+        await upsertFile(heroImage, bytes, `Upload hero image for ${name}`);
+      }
+
+      const screenshots = Array.isArray(body.screenshots) ? body.screenshots.slice() : [];
+      for (let i = 0; i < screenshotUploads.length; i += 1) {
+        const { bytes, ext } = decodeImage(screenshotUploads[i]);
+        const imagePath = `assets/${slug}-shot-${i + 1}.${ext}`;
+        await upsertFile(imagePath, bytes, `Upload screenshot ${i + 1} for ${name}`);
+        screenshots.push(imagePath);
+      }
+
+      let products = [];
+      try {
+        const file = await gh(`/repos/${repo}/contents/content.js?ref=${encodeURIComponent(branch)}`);
+        const text = Buffer.from(file.content.replace(/\n/g, ''), 'base64').toString('utf8');
+        const marker = 'window.INNIE_PRODUCTS = ';
+        const start = text.indexOf(marker);
+        const end = text.indexOf('];', start);
+        if (start >= 0 && end >= 0) products = JSON.parse(text.slice(start + marker.length, end + 1));
+      } catch (err) {
+        console.warn('Could not read existing content from GitHub:', err.message);
+      }
+
+      const item = {
+        name,
+        type,
+        status,
+        slug,
+        appUrl,
+        shortDescription,
+        description,
+        heroImage,
+        screenshots,
+        updatedAt: new Date().toISOString()
+      };
+
+      const existingIndex = products.findIndex(p => p.slug === (editingSlug || slug));
+      if (existingIndex >= 0) {
+        products[existingIndex] = item;
+      } else {
+        products.unshift(item);
+      }
+
+      const newContentJs = `// INNIE content source of truth.\n// Automatically maintained by the INNIE Publishing API.\nwindow.INNIE_PRODUCTS = ${JSON.stringify(products, null, 2)};\n`;
+      await upsertFile('content.js', newContentJs, `${editingSlug ? 'Update' : 'Publish'} ${name}`);
+
+      return json(res, 200, { ok: true, slug, product: item });
     }
 
-    const screenshots = [];
-    for (let i = 0; i < Math.min(Array.isArray(body.screenshots) ? body.screenshots.length : 0, 12); i++) {
-      const image = decodeImage(body.screenshots[i]);
-      const path = `${base}/screenshot-${String(i + 1).padStart(2, '0')}.${image.ext}`;
-      await upsertFile(path, image.bytes, `Add ${name} screenshot ${i + 1}`);
-      screenshots.push(path);
-    }
+    // Local filesystem fallback
+    const saved = saveLocally(
+      { name, type, status, slug, appUrl, shortDescription, description, heroImage: body.heroImage, screenshots: body.screenshots },
+      heroImageUpload,
+      screenshotUploads,
+      Boolean(editingSlug)
+    );
 
-    const current = await gh(`/repos/${repo}/contents/content.js?ref=${encodeURIComponent(branch)}`);
-    const currentText = Buffer.from(current.content.replace(/\n/g, ''), 'base64').toString('utf8');
-    const marker = 'window.INNIE_PRODUCTS = ';
-    const start = currentText.indexOf(marker);
-    if (start < 0) throw new Error('content.js does not contain the expected product model.');
-    const arrayStart = start + marker.length;
-    const arrayEnd = currentText.indexOf('];', arrayStart);
-    if (arrayEnd < 0) throw new Error('Could not locate product list in content.js.');
-    let products;
-    try { products = JSON.parse(currentText.slice(arrayStart, arrayEnd + 1)); } catch { products = []; }
-
-    const product = {
-      slug, name, type, status,
-      shortDescription: String(body.shortDescription || '').trim(),
-      description: String(body.description || '').trim(),
-      heroImage,
-      screenshots,
-      appUrl: String(body.appUrl || '').trim()
-    };
-    const index = products.findIndex(item => item.slug === slug);
-    if (index >= 0) products[index] = product; else products.push(product);
-    const next = `// This file is managed by the INNIE publishing dashboard.\nwindow.INNIE_PRODUCTS = ${JSON.stringify(products, null, 2)};\n`;
-    await upsertFile('content.js', next, `${index >= 0 ? 'Update' : 'Publish'} ${name}`);
-
-    return json(res, 200, { ok: true, product, message: index >= 0 ? 'Product/service updated.' : 'Product/service published.' });
+    return json(res, 200, { ok: true, slug, product: saved });
   } catch (error) {
-    console.error(error);
+    console.error('Publish error:', error);
     return json(res, 500, { error: error.message || 'Publishing failed.' });
   }
 };
