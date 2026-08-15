@@ -1,7 +1,10 @@
-const products = [];
-
+const products = window.INNIE_PRODUCTS || [];
 const grid = document.getElementById('product-grid');
 const empty = document.getElementById('empty-state');
+
+function escapeHtml(value) {
+  return String(value).replace(/[&<>'"]/g, (char) => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[char]));
+}
 
 function renderProducts() {
   if (!grid || !empty) return;
@@ -13,20 +16,12 @@ function renderProducts() {
     card.href = `product.html?slug=${encodeURIComponent(product.slug)}`;
     card.innerHTML = `
       <div class="product-top">
-        <div>
-          <h3>${escapeHtml(product.name)}</h3>
-          <p>${escapeHtml(product.shortDescription)}</p>
-        </div>
+        <div><h3>${escapeHtml(product.name)}</h3><p>${escapeHtml(product.shortDescription)}</p></div>
         <span class="status"><span class="status-dot">${product.status === 'Live' ? '●' : '○'}</span>${escapeHtml(product.status)}</span>
       </div>
-      <div class="product-bottom"><span class="product-link">View ${product.type === 'service' ? 'service' : 'product'} →</span></div>
-    `;
+      <div class="product-bottom"><span class="product-link">View ${product.type === 'service' ? 'service' : 'product'} →</span></div>`;
     grid.appendChild(card);
   });
-}
-
-function escapeHtml(value) {
-  return String(value).replace(/[&<>'"]/g, (char) => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[char]));
 }
 
 const form = document.getElementById('email-form');
@@ -35,7 +30,7 @@ form?.addEventListener('submit', (event) => {
   event.preventDefault();
   const email = new FormData(form).get('email');
   if (!email) return;
-  // Placeholder until the INNIE email backend is connected.
+  // Temporary UI confirmation. Connect this single collector to the INNIE email backend before launch.
   note.textContent = 'You’re on the list. We’ll keep you posted.';
   form.reset();
 });
