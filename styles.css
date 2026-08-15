@@ -894,6 +894,27 @@ a {
   max-width: 500px;
 }
 
+.footer-social-link {
+  font-size: 13px;
+  color: var(--primary-blue);
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+.footer-social-link:hover {
+  opacity: 0.85;
+  transform: translateY(-1px);
+}
+
+.footer-social-link svg {
+  width: 14px;
+  height: 14px;
+  fill: currentColor;
+}
+
 .footer-copyright {
   font-size: 11px;
   font-weight: 700;
