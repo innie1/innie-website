@@ -32,6 +32,50 @@ function saveSubscriberLocally(email) {
   }
 }
 
+// Send instant email notification via Resend API
+async function sendResendNotification(subscriberEmail) {
+  const apiKey = process.env.RESEND_API_KEY;
+  if (!apiKey) return;
+
+  const toEmail = process.env.NOTIFICATION_EMAIL || 'inniegroup@gmail.com';
+  const fromEmail = process.env.RESEND_FROM_EMAIL || 'INNIE Updates <onboarding@resend.dev>';
+
+  try {
+    const res = await fetch('https://api.resend.com/emails', {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${apiKey}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        from: fromEmail,
+        to: [toEmail],
+        subject: `🎉 New Subscriber on INNIE Website: ${subscriberEmail}`,
+        html: `
+          <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 540px; margin: 0 auto; padding: 24px; border: 1px solid #e2e8f0; border-radius: 12px; background: #ffffff;">
+            <h2 style="color: #00A3FF; margin-top: 0; font-size: 22px;">INNIE GROUP</h2>
+            <p style="font-size: 16px; color: #0f172a; line-height: 1.5;">You received a new email subscriber from your website landing page!</p>
+            <div style="background: #f8fafc; padding: 16px; border-radius: 8px; border: 1px solid #e2e8f0; margin: 20px 0;">
+              <p style="margin: 0; font-size: 14px; color: #64748b;"><strong>Subscriber Email:</strong></p>
+              <p style="margin: 6px 0 0; font-size: 18px; color: #00A3FF; font-weight: bold;">${subscriberEmail}</p>
+            </div>
+            <p style="font-size: 12px; color: #94a3b8; margin-bottom: 0;">Time (UTC): ${new Date().toUTCString()}</p>
+          </div>
+        `
+      })
+    });
+
+    const data = await res.json();
+    if (!res.ok) {
+      console.warn('Resend notification warning:', data);
+    } else {
+      console.log(`[Resend Notification] Sent email notification for: ${subscriberEmail}`);
+    }
+  } catch (err) {
+    console.error('Failed to send Resend notification:', err);
+  }
+}
+
 module.exports = async (req, res) => {
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
@@ -44,6 +88,8 @@ module.exports = async (req, res) => {
 
   const url = process.env.SUPABASE_URL;
   const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+  let savedSuccessfully = false;
 
   // If Supabase credentials are configured, save to Supabase
   if (url && key) {
@@ -59,26 +105,29 @@ module.exports = async (req, res) => {
         body: JSON.stringify({ email })
       });
 
-      if (!response.ok) {
+      if (response.ok) {
+        savedSuccessfully = true;
+      } else {
         const text = await response.text();
         console.error('Supabase subscription error:', text);
-        return res.status(500).json({ error: 'Could not save your email right now.' });
       }
-
-      return res.status(200).json({ ok: true, message: 'Subscribed successfully.' });
     } catch (err) {
       console.error('Supabase request failed:', err);
-      return res.status(500).json({ error: 'Database connection failed.' });
     }
   }
 
-  // Fallback for local development or when Supabase is not configured yet
-  const saved = saveSubscriberLocally(email);
-  if (saved) {
-    console.log(`[Local Subscription] New subscriber email received: ${email}`);
+  // Fallback to local storage if Supabase is not yet configured or fails in local development
+  if (!savedSuccessfully) {
+    savedSuccessfully = saveSubscriberLocally(email);
+  }
+
+  if (savedSuccessfully) {
+    // Send email alert via Resend asynchronously
+    sendResendNotification(email).catch(console.error);
+
     return res.status(200).json({ 
       ok: true, 
-      message: 'Subscribed successfully (saved to local development storage).' 
+      message: 'Subscribed successfully.' 
     });
   }
 
