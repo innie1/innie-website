@@ -16,15 +16,16 @@ The site follows the original INNIE notebook concept rather than a generic SaaS 
 
 ## Publishing dashboard
 
-`/admin.html` is the private publishing dashboard. It is designed so INNIE can publish without editing website code:
+`/admin.html` is the private publishing dashboard. It is designed so INNIE can manage the site without editing website code:
 
 1. Sign in with the admin password.
-2. Add a product or service name, type, status, launch URL, short description and full description.
-3. Upload a hero/logo image.
-4. Upload multiple product screenshots (up to 12, 3 MB each).
-5. Publish.
+2. View everything currently published.
+3. Add or edit a product/service name, type, status, launch URL, short description and full description.
+4. Upload a hero/logo image.
+5. Upload multiple product screenshots (up to 12, 3 MB each).
+6. Publish/save changes or unpublish an item.
 
-The dashboard sends the content to a protected Vercel serverless endpoint. The endpoint commits the images and updated `content.js` to GitHub. Vercel can then automatically redeploy the updated site.
+The dashboard sends content to protected Vercel serverless endpoints. Publishing commits the images and updated `content.js` to GitHub. Vercel can then automatically redeploy the updated site.
 
 ### Required Vercel environment variables
 
@@ -60,15 +61,19 @@ The service-role key is used only inside the Vercel serverless function, so subs
 - `product.js` — product/service detail rendering.
 - `admin.html` — private publishing dashboard UI.
 - `admin.css` — publishing dashboard styles.
-- `admin.js` — dashboard interaction and uploads.
+- `admin.js` — dashboard interaction, editing, and uploads.
 - `api/admin-login.js` — protected admin login endpoint.
-- `api/admin-publish.js` — GitHub-backed publishing endpoint.
+- `api/admin-content.js` — authenticated published-content endpoint.
+- `api/admin-publish.js` — GitHub-backed publishing/editing endpoint.
+- `api/admin-unpublish.js` — authenticated unpublish endpoint.
 - `api/subscribe.js` — Supabase-backed email subscription endpoint.
 - `vercel.json` — Vercel serverless-function configuration.
 
 ## Deployment
 
 The project is framework-free and can be deployed directly to Vercel. GitHub is the source of truth. Every meaningful project change should keep this README current.
+
+Before production use, configure the Vercel environment variables above and run the Supabase table SQL.
 
 ## Repository
 
