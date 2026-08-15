@@ -67,13 +67,15 @@ The service-role key is used only inside the Vercel serverless function, so subs
 - `api/admin-publish.js` — GitHub-backed publishing/editing endpoint.
 - `api/admin-unpublish.js` — authenticated unpublish endpoint.
 - `api/subscribe.js` — Supabase-backed email subscription endpoint.
-- `vercel.json` — Vercel serverless-function configuration.
+- `vercel.json` — minimal Vercel configuration; API function runtimes are detected automatically by Vercel.
 
 ## Deployment
 
-The project is framework-free and can be deployed directly to Vercel. GitHub is the source of truth. Every meaningful project change should keep this README current.
+The project is framework-free and can be deployed directly to Vercel. GitHub is the source of truth. The Vercel configuration was kept minimal so Vercel can automatically detect the Node.js serverless functions in `api/` without an invalid legacy runtime declaration.
 
 Before production use, configure the Vercel environment variables above and run the Supabase table SQL.
+
+Every meaningful project change should keep this README current.
 
 ## Repository
 
