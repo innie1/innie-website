@@ -14,11 +14,17 @@
   </header>
   <main>
     <section class="notify" aria-labelledby="notify-title">
-      <p class="eyebrow">INNIE GROUP</p>
-      <h1 id="notify-title">Something new is coming.</h1>
-      <p>Leave your email and we'll let you know when we launch something new.</p>
-      <form class="email-form" id="email-form"><label class="sr-only" for="email">Email address</label><input id="email" name="email" type="email" placeholder="Your email address" autocomplete="email" required /><button type="submit">Keep me posted</button></form>
-      <p class="form-note" id="form-note" role="status"></p>
+      <div class="notify-copy">
+        <p class="eyebrow">INNIE GROUP</p>
+        <h1 id="notify-title">Something new is coming.</h1>
+        <p>Be the first to know when we launch something new.</p>
+      </div>
+      <form class="email-form" id="email-form">
+        <label class="sr-only" for="email">Email address</label>
+        <input id="email" name="email" type="email" placeholder="Your email address" autocomplete="email" required />
+        <button type="submit">Keep me posted</button>
+      </form>
+      <p class="form-note" id="form-note" role="status" aria-live="polite"></p>
     </section>
     <section class="products" id="products" aria-labelledby="products-title">
       <div class="section-heading"><div><p class="eyebrow">WHAT WE'RE BUILDING</p><h2 id="products-title">Products &amp; Services</h2></div></div>
