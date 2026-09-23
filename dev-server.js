@@ -71,7 +71,10 @@ const server = http.createServer(async (req, res) => {
     const routeName = pathname.slice('/api/'.length).replace(/\.js$/, '');
     const apiFilePath = path.join(__dirname, 'api', `${routeName}.js`);
 
-    if (fs.existsSync(apiFilePath)) {
+    // Like Vercel: files and folders starting with "_" (api/_lib) are helpers, not endpoints.
+    const isHelper = routeName.split('/').some(part => part.startsWith('_'));
+
+    if (!isHelper && fs.existsSync(apiFilePath)) {
       try {
         let body = '';
         req.on('data', chunk => {

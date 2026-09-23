@@ -38,12 +38,29 @@ The dashboard sends content to protected Vercel serverless endpoints. Publishing
 - `ADMIN_SESSION_SECRET` — long random secret used to sign the admin session cookie.
 - `SUPABASE_URL` — Supabase project URL used by the email collector (`https://skojozxjeoobakrubnuj.supabase.co`).
 - `SUPABASE_SERVICE_ROLE_KEY` — Supabase service-role key; server-side only, never expose it in frontend code.
+- `RESEND_API_KEY` — Resend key for the new-subscriber alert and the welcome email.
+- `NOTIFICATION_EMAIL` — where new-subscriber alerts go (optional; defaults to `innswara@gmail.com`).
+- `RESEND_FROM_EMAIL` — sender address (optional; defaults to Resend's test sender, which can only mail your own Resend account — verify a domain in Resend to email subscribers).
+- `VISITOR_SALT` — random secret used to fingerprint visitors for rating and login limits (optional; falls back to `ADMIN_SESSION_SECRET`).
 
-### Email subscriber table
+Without `SUPABASE_SERVICE_ROLE_KEY` or `RESEND_API_KEY`, sign-ups on the live site cannot be stored and visitors see an error.
 
-The single homepage email collector expects a Supabase table named `innie_subscribers` with a unique email address. The ready-to-run SQL is in [`supabase.sql`](./supabase.sql).
+### Database
 
-The service-role key is used only inside the Vercel serverless function, so subscriber emails are not committed to the public GitHub repository.
+Run [`supabase.sql`](./supabase.sql) in the Supabase SQL Editor. It is safe to re-run and creates:
+
+- `innie_subscribers` — homepage email sign-ups (unique email).
+- `innie_product_ratings` — star ratings, one per visitor per product.
+- `innie_admin_login_failures` — failed admin logins, for the lockout.
+
+All three have row level security switched on with no policies, so only the server's service-role key can read or write them.
+
+### Abuse protection
+
+- **Sign-ups:** the welcome email and the admin alert go out only the first time an address is added, so the form cannot be used to send repeated mail to someone else's inbox. The welcome email is sent only when Supabase confirms the address is new.
+- **Ratings:** only published products can be rated, and each visitor has one rating per product; rating again replaces the earlier one. Visitors are identified by a one-way hash of their IP address, never the raw IP.
+- **Admin login:** 5 wrong passwords from one visitor within 15 minutes locks that visitor out for 15 minutes.
+- **Editing:** saving an edit keeps the product's existing images; new uploads get unique file names so they never overwrite earlier ones. A new or renamed item cannot take the name of another published item.
 
 ## Files
 
@@ -64,9 +81,10 @@ The service-role key is used only inside the Vercel serverless function, so subs
 - `api/admin-subscribers.js` — authenticated subscriber emails endpoint.
 - `api/subscribe.js` — Supabase-backed email subscription endpoint with Resend automated alerts.
 - `api/rate-product.js` — interactive 5-star ratings and customer reviews endpoint.
-- `supabase.sql` — database table setup for homepage subscribers and product ratings.
+- `api/_lib/` — shared server helpers (admin session check, Supabase access, reading/writing `content.js`). Vercel does not expose files starting with `_` as endpoints.
+- `supabase.sql` — database setup for subscribers, ratings and the admin login lockout.
 - `dev-server.js` — lightweight local development server for static files and `/api/` endpoints.
-- `vercel.json` — minimal Vercel configuration; API function runtimes are detected automatically by Vercel.
+- `vercel.json` — minimal Vercel configuration; API function runtimes are detected automatically by Vercel. It bundles `content.js` with the ratings endpoint so it can check which products are published.
 
 ## Local Development
 

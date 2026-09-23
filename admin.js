@@ -27,6 +27,7 @@ const copySubscribersBtn = document.getElementById('copy-subscribers-btn');
 const subscriberSearchInput = document.getElementById('subscriber-search');
 
 let published = [];
+let editingProduct = null;
 let allSubscribers = [];
 let heroDataUrl = null;
 let screenshotDataUrls = [];
@@ -68,6 +69,7 @@ function resetEditor() {
   editorTitle.textContent = 'Add a product or service';
   publishButton.textContent = 'Publish to Catalog';
   cancelEdit.hidden = true;
+  editingProduct = null;
   preview.innerHTML = '';
   heroDataUrl = null;
   screenshotDataUrls = [];
@@ -75,6 +77,7 @@ function resetEditor() {
 }
 
 function editProduct(product) {
+  editingProduct = product;
   productForm.elements.editingSlug.value = product.slug;
   productForm.elements.name.value = product.name;
   productForm.elements.type.value = product.type;
@@ -321,6 +324,9 @@ productForm?.addEventListener('submit', async (e) => {
     appUrl: formData.get('appUrl'),
     shortDescription: formData.get('shortDescription'),
     description: formData.get('description'),
+    // Send the current images back so saving an edit keeps them.
+    heroImage: editingProduct ? (editingProduct.heroImage || '') : undefined,
+    screenshots: editingProduct ? (editingProduct.screenshots || []) : undefined,
     heroImageUpload: heroDataUrl || undefined,
     screenshotUploads: screenshotDataUrls.length > 0 ? screenshotDataUrls : undefined
   };
@@ -333,8 +339,8 @@ productForm?.addEventListener('submit', async (e) => {
     });
     const d = await r.json();
     if (!r.ok) throw new Error(d.error || 'Publishing failed.');
-    note(publishNote, 'Published successfully!', 'success');
     resetEditor();
+    note(publishNote, 'Published successfully!', 'success');
     await loadPublished();
   } catch (err) {
     note(publishNote, err.message, 'error');

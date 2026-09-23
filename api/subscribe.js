@@ -1,7 +1,9 @@
 const fs = require('fs');
 const path = require('path');
+const { configured, supabase } = require('./_lib/supabase');
 
-// Local file save fallback (works on local machine; safely skips on read-only serverless lambdas)
+// Local file save fallback (works on local machine; safely skips on read-only serverless lambdas).
+// Returns 'new', 'existing', or null when the file cannot be written.
 function saveSubscriberLocally(email) {
   try {
     const dataDir = path.join(__dirname, '..', 'data');
@@ -25,14 +27,18 @@ function saveSubscriberLocally(email) {
       });
       fs.writeFileSync(filePath, JSON.stringify(subscribers, null, 2), 'utf8');
     }
-    return true;
+    return existing ? 'existing' : 'new';
   } catch (err) {
     // Expected on read-only serverless environments like Vercel
-    return false;
+    return null;
   }
 }
 
 // Send instant email notification to admin via Resend API
+function escapeHtml(value) {
+  return String(value || '').replace(/[&<>'"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[c]));
+}
+
 async function sendResendAdminAlert(subscriberEmail) {
   const apiKey = process.env.RESEND_API_KEY;
   if (!apiKey) return false;
@@ -57,7 +63,7 @@ async function sendResendAdminAlert(subscriberEmail) {
             <p style="font-size: 16px; color: #0f172a; line-height: 1.5;">You received a new email subscriber from your website landing page!</p>
             <div style="background: #f8fafc; padding: 16px; border-radius: 8px; border: 1px solid #e2e8f0; margin: 20px 0;">
               <p style="margin: 0; font-size: 14px; color: #64748b;"><strong>Subscriber Email:</strong></p>
-              <p style="margin: 6px 0 0; font-size: 18px; color: #00A3FF; font-weight: bold;">${subscriberEmail}</p>
+              <p style="margin: 6px 0 0; font-size: 18px; color: #00A3FF; font-weight: bold;">${escapeHtml(subscriberEmail)}</p>
             </div>
             <p style="font-size: 12px; color: #94a3b8; margin-bottom: 0;">Time (UTC): ${new Date().toUTCString()}</p>
           </div>
@@ -114,76 +120,58 @@ async function sendResendWelcomeEmail(subscriberEmail) {
   }
 }
 
+// Saves the address. Returns 'new', 'existing', or null when Supabase is not
+// configured or the save failed.
+async function saveSubscriberToSupabase(email) {
+  const response = await supabase('innie_subscribers?on_conflict=email', {
+    method: 'POST',
+    // ignore-duplicates + representation returns only rows that were actually inserted.
+    headers: { Prefer: 'resolution=ignore-duplicates,return=representation' },
+    body: JSON.stringify({ email })
+  });
+  if (!response) return null;
+  if (!response.ok) {
+    console.error('[Supabase Error]:', await response.text());
+    return null;
+  }
+  const rows = await response.json().catch(() => []);
+  return Array.isArray(rows) && rows.length > 0 ? 'new' : 'existing';
+}
+
 module.exports = async (req, res) => {
-  // CORS & method check
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
   const email = String(req.body?.email || '').trim().toLowerCase();
-  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+  if (email.length > 254 || !/^[^\s@<>"'&]+@[^\s@<>"'&]+\.[^\s@<>"'&]+$/.test(email)) {
     return res.status(400).json({ error: 'Enter a valid email address.' });
   }
 
-  const url = process.env.SUPABASE_URL || 'https://skojozxjeoobakrubnuj.supabase.co';
-  const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
-  const resendKey = process.env.RESEND_API_KEY;
+  // 1. Store the address. Supabase tells us whether it is new; the local file is for development.
+  const saved = (await saveSubscriberToSupabase(email)) || saveSubscriberLocally(email);
 
-  let supabaseSaved = false;
-  let emailDispatched = false;
-
-  // 1. Try Saving to Supabase
-  if (url && key) {
-    try {
-      const response = await fetch(`${url.replace(/\/$/, '')}/rest/v1/innie_subscribers`, {
-        method: 'POST',
-        headers: {
-          apikey: key,
-          Authorization: `Bearer ${key}`,
-          'Content-Type': 'application/json',
-          Prefer: 'resolution=merge-duplicates,return=minimal'
-        },
-        body: JSON.stringify({ email })
-      });
-
-      if (response.ok) {
-        supabaseSaved = true;
-      } else {
-        const text = await response.text();
-        console.error('[Supabase Error]:', text);
-      }
-    } catch (err) {
-      console.error('[Supabase Request Failed]:', err);
+  // 2. Emails go out only for a first-time signup, so the form cannot be used to
+  //    send repeated mail to someone else's inbox. When the address could not be
+  //    stored anywhere, the admin alert is the only record, so it is still sent.
+  let alertSent = false;
+  if (process.env.RESEND_API_KEY) {
+    if (saved === 'new' || !saved) {
+      alertSent = await sendResendAdminAlert(email);
     }
-  }
-
-  // 2. Try Sending Resend Notifications (Awaited for Vercel Lambdas)
-  if (resendKey) {
-    try {
-      const alertSent = await sendResendAdminAlert(email);
-      if (alertSent) {
-        emailDispatched = true;
-      }
-      // Attempt welcome email without blocking
+    // The welcome email needs Supabase to prove the address is new.
+    if (saved === 'new' && configured()) {
       await sendResendWelcomeEmail(email);
-    } catch (err) {
-      console.error('[Resend Notification Error]:', err);
     }
   }
 
-  // 3. Fallback to Local Storage if running locally
-  const localSaved = saveSubscriberLocally(email);
-
-  // If stored in Supabase OR notified via Resend OR saved locally -> SUCCESS
-  if (supabaseSaved || emailDispatched || localSaved) {
-    return res.status(200).json({ 
-      ok: true, 
-      message: 'Subscribed successfully.' 
-    });
+  if (saved || alertSent) {
+    // Same reply for new and existing addresses, so the form does not reveal who has signed up.
+    return res.status(200).json({ ok: true, message: 'Subscribed successfully.' });
   }
 
-  // If all failed, provide a helpful message
-  return res.status(503).json({ 
-    error: 'Subscription service is not configured. Please ensure RESEND_API_KEY or SUPABASE_SERVICE_ROLE_KEY is set in Vercel Environment Variables.' 
+  console.error('[Subscribe] Nothing stored: set SUPABASE_SERVICE_ROLE_KEY and/or RESEND_API_KEY in Vercel.');
+  return res.status(503).json({
+    error: 'Sorry, sign-ups are paused for a moment. Please try again later or email inniegroup@gmail.com.'
   });
 };

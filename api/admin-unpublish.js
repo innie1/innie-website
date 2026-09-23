@@ -1,19 +1,9 @@
-const crypto = require('crypto');
+const { authOk } = require('./_lib/auth');
+const { LOCAL_FILE, parseProducts, serializeProducts } = require('./_lib/content');
 const fs = require('fs');
-const path = require('path');
 
 const repo = process.env.GITHUB_REPO || 'innie1/innie-website';
 const branch = process.env.GITHUB_BRANCH || 'main11';
-
-function authOk(req) {
-  const secret = process.env.ADMIN_SESSION_SECRET;
-  const password = process.env.ADMIN_PASSWORD;
-  const cookie = (req.headers.cookie || '').split(';').map(v => v.trim()).find(v => v.startsWith('innie_admin='));
-  const token = cookie ? decodeURIComponent(cookie.slice('innie_admin='.length)) : '';
-  if (!secret || !password || !token) return false;
-  const expected = crypto.createHmac('sha256', secret).update(password).digest('hex');
-  return token.length === expected.length && crypto.timingSafeEqual(Buffer.from(token), Buffer.from(expected));
-}
 
 async function gh(apiPath, options = {}) {
   const r = await fetch(`https://api.github.com${apiPath}`, {
@@ -41,16 +31,12 @@ module.exports = async (req, res) => {
     // In production with GITHUB_TOKEN
     if (process.env.GITHUB_TOKEN) {
       const file = await gh(`/repos/${repo}/contents/content.js?ref=${encodeURIComponent(branch)}`);
-      const text = Buffer.from(file.content.replace(/\n/g, ''), 'base64').toString('utf8');
-      const marker = 'window.INNIE_PRODUCTS = ';
-      const start = text.indexOf(marker);
-      const end = text.indexOf('];', start);
-      if (start < 0 || end < 0) throw new Error('Invalid content.js model.');
-      const products = JSON.parse(text.slice(start + marker.length, end + 1));
+      const products = parseProducts(Buffer.from(file.content.replace(/\n/g, ''), 'base64').toString('utf8'));
+      if (!products) throw new Error('Invalid content.js model.');
       const nextProducts = products.filter(item => item.slug !== slug);
       if (nextProducts.length === products.length) return res.status(404).json({ error: 'Product/service not found.' });
 
-      const next = `// INNIE content source of truth.\n// Automatically maintained by the INNIE Publishing API.\nwindow.INNIE_PRODUCTS = ${JSON.stringify(nextProducts, null, 2)};\n`;
+      const next = serializeProducts(nextProducts);
       await gh(`/repos/${repo}/contents/content.js`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
@@ -60,17 +46,10 @@ module.exports = async (req, res) => {
     }
 
     // Local filesystem fallback
-    const contentFilePath = path.join(__dirname, '..', 'content.js');
-    if (fs.existsSync(contentFilePath)) {
-      const text = fs.readFileSync(contentFilePath, 'utf8');
-      const marker = 'window.INNIE_PRODUCTS = ';
-      const start = text.indexOf(marker);
-      const end = text.indexOf('];', start);
-      if (start >= 0 && end >= 0) {
-        const products = JSON.parse(text.slice(start + marker.length, end + 1));
-        const nextProducts = products.filter(item => item.slug !== slug);
-        const next = `// INNIE content source of truth.\n// Automatically maintained by the INNIE Publishing API.\nwindow.INNIE_PRODUCTS = ${JSON.stringify(nextProducts, null, 2)};\n`;
-        fs.writeFileSync(contentFilePath, next, 'utf8');
+    if (fs.existsSync(LOCAL_FILE)) {
+      const products = parseProducts(fs.readFileSync(LOCAL_FILE, 'utf8'));
+      if (products && products.some(item => item.slug === slug)) {
+        fs.writeFileSync(LOCAL_FILE, serializeProducts(products.filter(item => item.slug !== slug)), 'utf8');
         return res.status(200).json({ ok: true });
       }
     }

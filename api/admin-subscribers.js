@@ -1,26 +1,6 @@
-const crypto = require('crypto');
+const { authOk } = require('./_lib/auth');
 const fs = require('fs');
 const path = require('path');
-
-function authOk(req) {
-  const secret = process.env.ADMIN_SESSION_SECRET;
-  const password = process.env.ADMIN_PASSWORD;
-  const cookies = Object.fromEntries(
-    (req.headers.cookie || '')
-      .split(';')
-      .filter(Boolean)
-      .map((v) => {
-        const i = v.indexOf('=');
-        return [v.slice(0, i).trim(), decodeURIComponent(v.slice(i + 1).trim())];
-      })
-  );
-  if (!secret || !password || !cookies.innie_admin) return false;
-  const expected = crypto.createHmac('sha256', secret).update(password).digest('hex');
-  return (
-    cookies.innie_admin.length === expected.length &&
-    crypto.timingSafeEqual(Buffer.from(cookies.innie_admin), Buffer.from(expected))
-  );
-}
 
 module.exports = async (req, res) => {
   if (req.method !== 'GET') {
