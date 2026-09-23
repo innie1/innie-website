@@ -1121,6 +1121,7 @@ a {
   }
   .notify-input, .notify-btn {
     width: 100%;
+    flex: none;
   }
   .products-grid {
     grid-template-columns: 1fr;
