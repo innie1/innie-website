@@ -68,6 +68,7 @@ All three have row level security switched on with no policies, so only the serv
 - `about.html` — INNIE about page and contact information.
 - `product.html` — individual product/service page.
 - `styles.css` — public visual system, animations, and responsive layout.
+- `assets/og-image.png` — 1200×630 link-preview image for X, LinkedIn, WhatsApp and Facebook. The pages reference it by full URL (`https://innie-website-three.vercel.app/assets/og-image.png`), so update those meta tags if the site moves to a custom domain.
 - `content.js` — published product/service data; managed by the publishing API.
 - `app.js` — landing-page rendering and the single email collector.
 - `product.js` — product/service detail rendering.
@@ -75,6 +76,7 @@ All three have row level security switched on with no policies, so only the serv
 - `admin.css` — publishing dashboard styles.
 - `admin.js` — dashboard interaction, editing, uploads, and subscriber management.
 - `api/admin-login.js` — protected admin login endpoint.
+- `api/admin-logout.js` — clears the admin session cookie (it is HttpOnly, so only the server can).
 - `api/admin-content.js` — authenticated published-content endpoint.
 - `api/admin-publish.js` — GitHub-backed publishing/editing endpoint.
 - `api/admin-unpublish.js` — authenticated unpublish endpoint.

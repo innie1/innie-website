@@ -379,8 +379,15 @@ loginForm?.addEventListener('submit', async (e) => {
 });
 
 // Sign Out Action
-adminSignoutBtn?.addEventListener('click', () => {
-  document.cookie = 'innie_admin=; Max-Age=0; path=/;';
+adminSignoutBtn?.addEventListener('click', async () => {
+  // The session cookie is HttpOnly, so the server has to clear it.
+  try {
+    const r = await fetch('/api/admin-logout', { method: 'POST' });
+    if (!r.ok) throw new Error();
+  } catch {
+    alert('Could not sign out. Check your connection and try again.');
+    return;
+  }
   loginPanel.hidden = false;
   editorPanel.hidden = true;
   adminSignoutBtn.style.display = 'none';
