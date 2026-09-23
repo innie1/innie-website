@@ -32,28 +32,26 @@
 <body>
 
   <!-- Site Header -->
-  <header class="site-header home-header">
-    <div class="header-left">
-      <a class="brand-logo" href="index.html" aria-label="INNIE home">INNIE</a>
-    </div>
-    <div class="header-center">
-      <a class="nav-link" href="#products">Products &amp; Services</a>
-    </div>
-    <div class="header-right">
-      <a class="nav-link" href="about.html">Contact Us</a>
-    </div>
+  <header class="site-header">
+    <a class="brand-logo" href="index.html" aria-label="INNIE home">INNIE</a>
+    <nav class="nav-links" aria-label="Main">
+      <a class="nav-link" href="index.html#products">Products &amp; Services</a>
+      <a class="nav-link nav-link-secondary" href="about.html">About</a>
+      <a class="nav-cta" href="about.html#contact">Contact Us</a>
+    </nav>
   </header>
 
   <main class="main-wrapper">
 
     <!-- Hero / Notify Section -->
-    <section class="hero-section" aria-labelledby="hero-title">
-      <p class="eyebrow-blue">BE THE FIRST TO KNOW</p>
-      <h1 class="hero-title" id="hero-title">Something new is coming.</h1>
+    <section class="hero-section" id="top" aria-labelledby="hero-title">
+      <div class="hero-glow" aria-hidden="true"></div>
+      <p class="hero-badge"><span class="badge-dot" aria-hidden="true"></span>Be the first to know</p>
+      <h1 class="hero-title" id="hero-title">Something <span class="accent-text">new</span> is coming.</h1>
       <p class="hero-subtitle">Be the first to test what we're building. Leave your email for private beta invites, launch-day access, and insider updates.</p>
-      
+
       <form class="notify-form" id="email-form">
-        <label class="sr-only" for="email" style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0);">Email address</label>
+        <label class="sr-only" for="email">Email address</label>
         <input class="notify-input" id="email" name="email" type="email" placeholder="Enter your email" autocomplete="email" required />
         <button class="notify-btn" id="notify-button" type="submit">
           <span class="btn-text">Notify me</span>
@@ -63,7 +61,7 @@
         <p class="notify-feedback" id="form-note" role="status" aria-live="polite"></p>
         <div class="post-signup-prompt" id="post-signup-prompt" style="display: none;">
           <a class="post-signup-x-btn" href="https://x.com/inniegroup" target="_blank" rel="noopener noreferrer">
-            <svg viewBox="0 0 24 24" style="width: 16px; height: 16px; fill: currentColor;">
+            <svg viewBox="0 0 24 24" style="width: 16px; height: 16px; fill: currentColor;" aria-hidden="true">
               <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
             </svg>
             <span>Follow @inniegroup on X for progress updates &rarr;</span>
@@ -72,64 +70,98 @@
       </div>
     </section>
 
+    <!-- What INNIE builds -->
+    <section class="pillars-section" aria-label="What we build">
+      <div class="pillar">
+        <span class="pillar-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="m8.5 12 2.5 2.5 4.5-5"/></svg>
+        </span>
+        <h3>Simple</h3>
+        <p>Easy to use from the start, so people can focus on what matters.</p>
+      </div>
+      <div class="pillar">
+        <span class="pillar-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a4 4 0 0 0-5.4 5.4L3 18l3 3 6.3-6.3a4 4 0 0 0 5.4-5.4l-2.6 2.6-2.4-.6-.6-2.4z"/></svg>
+        </span>
+        <h3>Useful</h3>
+        <p>Built to solve real problems for people and businesses.</p>
+      </div>
+      <div class="pillar">
+        <span class="pillar-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l2.6 5.3 5.9.9-4.3 4.1 1 5.8L12 16.4l-5.2 2.7 1-5.8L3.5 9.2l5.9-.9z"/></svg>
+        </span>
+        <h3>Made to last</h3>
+        <p>Designed with care for quality and a lasting impact.</p>
+      </div>
+    </section>
+
     <!-- Products & Services Section -->
     <section class="products-section" id="products" aria-labelledby="products-title">
-      <p class="eyebrow-blue">PRODUCTS & SERVICES</p>
+      <p class="eyebrow-blue">What we're building</p>
       <h2 class="products-title" id="products-title">Products &amp; Services</h2>
       <p class="products-subtitle">Tap any item to learn more and rate our releases.</p>
 
       <div class="products-grid" id="product-grid"></div>
       <div class="empty-products-notice" id="empty-state">
-        <p>Products and services will appear here when they are published.</p>
+        <span class="empty-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2c.71-.84.7-2.13-.09-2.91a2.18 2.18 0 0 0-2.91-.09z"/><path d="m12 15-3-3a22 22 0 0 1 2-3.95A12.88 12.88 0 0 1 22 2c0 2.72-.78 7.5-6 11a22.35 22.35 0 0 1-4 2z"/><path d="M9 12H4s.55-3.03 2-4c1.62-1.08 5 0 5 0"/><path d="M12 15v5s3.03-.55 4-2c1.08-1.62 0-5 0-5"/></svg>
+        </span>
+        <h3>Our first releases are on the way</h3>
+        <p>Products and services will appear here when they are published. Leave your email above to hear first.</p>
+        <a class="empty-cta" href="#top">Get notified</a>
       </div>
     </section>
 
-    <!-- Bottom Split Section: Brand / About & Blog -->
-    <section class="bottom-split-section" id="about">
-      
-      <!-- Left Column: About INNIE & Brand Emblem -->
-      <div class="about-column">
-        <a class="brand-display-card" href="about.html" aria-label="About INNIE">
-          <img class="innie-logo-img" src="assets/logo.svg" alt="INNIE GROUP Logo" />
-        </a>
-        <div class="about-innie-block">
-          <h3>About INNIE</h3>
+    <!-- About & Follow -->
+    <section class="about-strip" id="about" aria-label="About INNIE">
+      <a class="about-card" href="about.html">
+        <div class="about-card-text">
+          <p class="eyebrow-blue">About INNIE</p>
+          <h2>Products that solve real problems.</h2>
           <p>INNIE is a company focused on building simple, useful products and services that solve real problems and create lasting impact.</p>
-          <p><a href="about.html" style="color: var(--primary-blue); font-weight: 600;">Learn more about us &rarr;</a></p>
+          <span class="text-link">Learn more about us &rarr;</span>
         </div>
-      </div>
+        <div class="about-card-logo">
+          <img class="innie-logo-img" src="assets/logo.svg" alt="INNIE GROUP logo" />
+        </div>
+      </a>
 
-      <!-- Right Column: From the Blog / Company Updates -->
-      <div class="blog-column">
-        <div class="blog-header">
-          <h3>From the Blog</h3>
-          <a class="blog-view-all" href="https://x.com/inniegroup" target="_blank" rel="noopener noreferrer">Follow updates on X &rarr;</a>
-        </div>
-        <div class="empty-blog-notice">
-          <p>Company updates, announcements, and articles are shared regularly as we build.</p>
-        </div>
-      </div>
-
+      <a class="follow-card" href="https://x.com/inniegroup" target="_blank" rel="noopener noreferrer">
+        <span class="follow-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
+        </span>
+        <h3>Follow the build</h3>
+        <p>Company updates, announcements, and articles are shared regularly as we build.</p>
+        <span class="follow-handle">@inniegroup &rarr;</span>
+      </a>
     </section>
 
   </main>
 
   <!-- Site Footer -->
   <footer class="site-footer">
-    <div class="footer-emblem">
-      <img class="innie-logo-footer" src="assets/logo.svg" alt="INNIE GROUP" />
+    <div class="footer-inner">
+      <div class="footer-brand">
+        <img class="innie-logo-footer" src="assets/logo.svg" alt="INNIE GROUP" />
+        <p class="footer-tagline">Building simple, useful products that help people and businesses move forward.</p>
+      </div>
+      <nav class="footer-links" aria-label="Footer">
+        <a href="index.html#products">Products &amp; Services</a>
+        <a href="about.html">About</a>
+        <a href="about.html#contact">Contact</a>
+        <a class="footer-social-link" href="https://x.com/inniegroup" target="_blank" rel="noopener noreferrer" aria-label="Follow INNIE on X">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
+          <span>@inniegroup</span>
+        </a>
+      </nav>
     </div>
-    <p class="footer-tagline">Building simple, useful products that help people and businesses move forward.</p>
-    <a class="footer-social-link" href="https://x.com/inniegroup" target="_blank" rel="noopener noreferrer" aria-label="Follow INNIE on X">
-      <svg viewBox="0 0 24 24">
-        <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
-      </svg>
-      <span>Follow @inniegroup on X</span>
-    </a>
     <p class="footer-copyright">&copy; INNIE GROUP</p>
   </footer>
 
   <script src="content.js"></script>
   <script src="app.js"></script>
+  <!-- Visitor counts: Vercel Web Analytics (no cookies, no personal data) -->
+  <script>window.va = window.va || function () { (window.vaq = window.vaq || []).push(arguments); };</script>
+  <script defer src="/_vercel/insights/script.js"></script>
 </body>
 </html>

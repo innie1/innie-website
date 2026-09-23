@@ -29,6 +29,10 @@ The site follows the INNIE design direction:
 
 The dashboard sends content to protected Vercel serverless endpoints. Publishing commits the images and updated `content.js` to GitHub. Vercel can then automatically redeploy the updated site.
 
+### Visitor counts
+
+The public pages (home, about, product) load Vercel Web Analytics from `/_vercel/insights/script.js`. It uses no cookies and stores no personal data. Turn it on once in Vercel → the `innie-website` project → **Analytics** → **Enable**; visits then appear on that tab. The admin dashboard is left out so your own visits there are not counted.
+
 ### Required Vercel environment variables
 
 - `GITHUB_TOKEN` — fine-grained GitHub token with Contents read/write access to this repository.
